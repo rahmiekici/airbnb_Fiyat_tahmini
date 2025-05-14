@@ -19,4 +19,7 @@ Bu proje, **LightGBM** modelini kullanarak **Airbnb fiyat tahmini** yapmayı ama
 - **NumPy/Pandas**: Veri işleme ve manipülasyonu.
 
 ## Kurulum ve Kullanım
-backendi çalıştırma : Cli ekranından dosyaları indirdiğiniz dizine gidiniz ve python ./backend.py komutu ile pyhton dosyasını çalıştırınız.Varsayılan uygulama dinleme portu 5000'dir. Örnek : http://127.0.0.1:5000  
+backendi çalıştırma : Cli ekranından dosyaları indirdiğiniz dizine gidiniz ve python ./backend.py komutu ile pyhton dosyasını çalıştırınız.Varsayılan uygulama dinleme portu 5000'dir. Örnek : http://127.0.0.1:5000
+
+Backend python dosyasını çalıştırdıktan sonra index.html dosyasına açarak testlerinizi yapabilirsiniz.
+
