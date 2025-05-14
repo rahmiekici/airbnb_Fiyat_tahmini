@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airbnb Fiyat Tahmini</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 30px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            flex: 1;
+        }
+
+        .price-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .price-title {
+            color: #ff5a5f;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .price-value {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #484848;
+        }
+
+        .price-usd {
+            color: #2e7d32;
+        }
+
+        .price-try {
+            color: #1976d2;
+        }
+
+        .exchange-rate {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .price-loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .price-error {
+            color: #c62828;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        h1 {
+            color: #ff5a5f;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #484848;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ff5a5f;
+            box-shadow: 0 0 5px rgba(255,90,95,0.2);
+        }
+
+        button {
+            background-color: #ff5a5f;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ff3b41;
+        }
+
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer a {
+            color: #ff5a5f;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <h1>Airbnb Fiyat Tahmini</h1>
+            
+            <div class="form-group">
+                <label for="neighbourhood_group">Eyalet</label>
+                <select id="neighbourhood_group">
+                    <option value="">Eyaleti Seçiniz</option>
+                    <option value="0">Bronx</option>
+                    <option value="1">Brooklyn</option>
+                    <option value="2">Manhattan</option>
+                    <option value="3">Queens</option>
+                    <option value="4">Staten Island</option>
+                </select>
+                <div class="info-text">Eyaleti seçiniz</div>
+            </div>
+
+            <div class="form-group">
+                <label for="neighbourhood">Şehir</label>
+                <select id="neighbourhood">
+                    <option value="">Şehri Seçiniz</option>
+                </select>
+                <div class="info-text">Şehri seçiniz</div>
+            </div>
+
+            <div class="form-group">
+                <label for="room_type">Oda Tipi</label>
+                <select id="room_type">
+                    <option value="">Oda Tipi Seçiniz</option>
+                    <option value="0">Tüm Ev/Daire</option>
+                    <option value="1">Özel Oda</option>
+                    <option value="2">Paylaşımlı Oda</option>
+                </select>
+                <div class="info-text">Oda tipini seçiniz</div>
+            </div>
+
+            <div class="form-group">
+                <label for="latitude">Enlem</label>
+                <input id="latitude" type="number" step="any" placeholder="Örn: 40.7128" />
+                <div class="info-text">Konumun enlem değerini giriniz</div>
+            </div>
+
+            <div class="form-group">
+                <label for="longitude">Boylam</label>
+                <input id="longitude" type="number" step="any" placeholder="Örn: -74.0060" />
+                <div class="info-text">Konumun boylam değerini giriniz</div>
+            </div>
+
+            <div class="form-group">
+                <label for="minimum_nights">Minimum Konaklama Süresi</label>
+                <input id="minimum_nights" type="number" placeholder="Örn: 2" />
+                <div class="info-text">Minimum konaklama süresini gün olarak giriniz</div>
+            </div>
+
+            <button onclick="gonder()">Fiyat Tahmini Yap</button>
+        </div>
+
+        <div class="price-container">
+            <div class="price-title">Tahmini Fiyat</div>
+            <div id="sonuc" class="price-loading">Fiyat tahmini için formu doldurunuz</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Bu sistem <a href="https://github.com/rahmiekici" target="_blank">Rahmi Ekici</a>  taarfından yazılmıştır. 2019 verileri kullanılmıştır.
+    </div>
+
+    <script>
+        // Mahalle gruplarına göre mahalleleri tanımlayalım
+        const neighbourhoodGroups = {
+            0: { // Bronx
+                name: "Bronx",
+                neighbourhoods: [
+                    {id: 0, name: "Allerton"},
+                    {id: 10, name: "Baychester"},
+                    {id: 16, name: "Belmont"},
+                    {id: 24, name: "Bronxdale"},
+                    {id: 32, name: "Castle Hill"},
+                    {id: 38, name: "Claremont Village"},
+                    {id: 39, name: "Clason Point"},
+                    {id: 42, name: "Co-op City"},
+                    {id: 47, name: "Concourse"},
+                    {id: 48, name: "Concourse Village"},
+                    {id: 62, name: "East Morrisania"},
+                    {id: 65, name: "Eastchester"},
+                    {id: 66, name: "Edenwald"},
+                    {id: 72, name: "Fieldston"},
+                    {id: 78, name: "Fordham"},
+                    {id: 96, name: "Highbridge"},
+                    {id: 111, name: "Kingsbridge"},
+                    {id: 121, name: "Marble Hill"},
+                    {id: 131, name: "Morris Heights"},
+                    {id: 132, name: "Morris Park"},
+                    {id: 133, name: "Morrisania"},
+                    {id: 134, name: "Mott Haven"},
+                    {id: 135, name: "Mount Eden"},
+                    {id: 136, name: "Mount Hope"},
+                    {id: 146, name: "North Riverdale"},
+                    {id: 147, name: "Norwood"},
+                    {id: 149, name: "Olinville"},
+                    {id: 152, name: "Parkchester"},
+                    {id: 153, name: "Pelham Bay"},
+                    {id: 154, name: "Pelham Gardens"},
+                    {id: 155, name: "Port Morris"},
+                    {id: 167, name: "Riverdale"},
+                    {id: 184, name: "Spuyten Duyvil"},
+                    {id: 192, name: "Throgs Neck"},
+                    {id: 196, name: "Tremont"},
+                    {id: 199, name: "Unionport"},
+                    {id: 200, name: "University Heights"},
+                    {id: 205, name: "Wakefield"},
+                    {id: 208, name: "West Farms"},
+                    {id: 210, name: "Westchester Square"},
+                    {id: 213, name: "Williamsbridge"},
+                    {id: 218, name: "Woodlawn"}
+                ]
+            },
+            1: { // Brooklyn
+                name: "Brooklyn",
+                neighbourhoods: [
+                    {id: 1, name: "Arden Heights"},
+                    {id: 2, name: "Arrochar"},
+                    {id: 5, name: "Bath Beach"},
+                    {id: 7, name: "Bay Ridge"},
+                    {id: 8, name: "Bay Terrace"},
+                    {id: 12, name: "Bayswater"},
+                    {id: 13, name: "Bedford-Stuyvesant"},
+                    {id: 14, name: "Belle Harbor"},
+                    {id: 17, name: "Bensonhurst"},
+                    {id: 18, name: "Bergen Beach"},
+                    {id: 19, name: "Boerum Hill"},
+                    {id: 20, name: "Borough Park"},
+                    {id: 21, name: "Breezy Point"},
+                    {id: 23, name: "Brighton Beach"},
+                    {id: 25, name: "Brooklyn Heights"},
+                    {id: 26, name: "Brownsville"},
+                    {id: 28, name: "Bushwick"},
+                    {id: 30, name: "Canarsie"},
+                    {id: 31, name: "Carroll Gardens"},
+                    {id: 41, name: "Clinton Hill"},
+                    {id: 43, name: "Cobble Hill"},
+                    {id: 45, name: "Columbia St"},
+                    {id: 49, name: "Coney Island"},
+                    {id: 51, name: "Crown Heights"},
+                    {id: 52, name: "Cypress Hills"},
+                    {id: 53, name: "DUMBO"},
+                    {id: 57, name: "Downtown Brooklyn"},
+                    {id: 58, name: "Dyker Heights"},
+                    {id: 60, name: "East Flatbush"},
+                    {id: 74, name: "Flatbush"},
+                    {id: 76, name: "Flatlands"},
+                    {id: 80, name: "Fort Greene"},
+                    {id: 81, name: "Fort Hamilton"},
+                    {id: 85, name: "Gowanus"},
+                    {id: 89, name: "Gravesend"},
+                    {id: 91, name: "Greenpoint"},
+                    {id: 108, name: "Kensington"},
+                    {id: 120, name: "Manhattan Beach"},
+                    {id: 122, name: "Mariners Harbor"},
+                    {id: 128, name: "Midwood"},
+                    {id: 129, name: "Mill Basin"},
+                    {id: 151, name: "Park Slope"},
+                    {id: 158, name: "Prospect Heights"},
+                    {id: 159, name: "Prospect-Lefferts Gardens"},
+                    {id: 162, name: "Red Hook"},
+                    {id: 174, name: "Sea Gate"},
+                    {id: 175, name: "Sheepshead Bay"},
+                    {id: 176, name: "Shore Acres"},
+                    {id: 177, name: "Silver Lake"},
+                    {id: 182, name: "South Slope"},
+                    {id: 190, name: "Sunset Park"},
+                    {id: 216, name: "Windsor Terrace"}
+                ]
+            },
+            2: { // Manhattan
+                name: "Manhattan",
+                neighbourhoods: [
+                    {id: 6, name: "Battery Park City"},
+                    {id: 34, name: "Chelsea"},
+                    {id: 35, name: "Chinatown"},
+                    {id: 37, name: "Civic Center"},
+                    {id: 61, name: "East Harlem"},
+                    {id: 64, name: "East Village"},
+                    {id: 73, name: "Financial District"},
+                    {id: 75, name: "Flatiron District"},
+                    {id: 86, name: "Gramercy"},
+                    {id: 92, name: "Greenwich Village"},
+                    {id: 94, name: "Harlem"},
+                    {id: 95, name: "Hell's Kitchen"},
+                    {id: 112, name: "Kips Bay"},
+                    {id: 115, name: "Little Italy"},
+                    {id: 119, name: "Lower East Side"},
+                    {id: 127, name: "Midtown"},
+                    {id: 130, name: "Morningside Heights"},
+                    {id: 137, name: "Murray Hill"},
+                    {id: 144, name: "NoHo"},
+                    {id: 145, name: "Nolita"},
+                    {id: 169, name: "Roosevelt Island"},
+                    {id: 178, name: "SoHo"},
+                    {id: 188, name: "Stuyvesant Town"},
+                    {id: 191, name: "Theater District"},
+                    {id: 197, name: "Tribeca"},
+                    {id: 198, name: "Two Bridges"},
+                    {id: 201, name: "Upper East Side"},
+                    {id: 202, name: "Upper West Side"},
+                    {id: 206, name: "Washington Heights"},
+                    {id: 209, name: "West Village"}
+                ]
+            },
+            3: { // Queens
+                name: "Queens",
+                neighbourhoods: [
+                    {id: 3, name: "Arverne"},
+                    {id: 4, name: "Astoria"},
+                    {id: 9, name: "Bay Terrace, Staten Island"},
+                    {id: 11, name: "Bayside"},
+                    {id: 15, name: "Bellerose"},
+                    {id: 22, name: "Briarwood"},
+                    {id: 29, name: "Cambria Heights"},
+                    {id: 36, name: "City Island"},
+                    {id: 44, name: "College Point"},
+                    {id: 50, name: "Corona"},
+                    {id: 54, name: "Ditmars Steinway"},
+                    {id: 56, name: "Douglaston"},
+                    {id: 59, name: "East Elmhurst"},
+                    {id: 63, name: "East New York"},
+                    {id: 68, name: "Elmhurst"},
+                    {id: 71, name: "Far Rockaway"},
+                    {id: 77, name: "Flushing"},
+                    {id: 79, name: "Forest Hills"},
+                    {id: 83, name: "Fresh Meadows"},
+                    {id: 84, name: "Glendale"},
+                    {id: 97, name: "Hollis"},
+                    {id: 98, name: "Holliswood"},
+                    {id: 99, name: "Howard Beach"},
+                    {id: 104, name: "Jackson Heights"},
+                    {id: 105, name: "Jamaica"},
+                    {id: 106, name: "Jamaica Estates"},
+                    {id: 107, name: "Jamaica Hills"},
+                    {id: 109, name: "Kew Gardens"},
+                    {id: 110, name: "Kew Gardens Hills"},
+                    {id: 113, name: "Laurelton"},
+                    {id: 116, name: "Little Neck"},
+                    {id: 117, name: "Long Island City"},
+                    {id: 123, name: "Maspeth"},
+                    {id: 125, name: "Middle Village"},
+                    {id: 163, name: "Rego Park"},
+                    {id: 164, name: "Richmond Hill"},
+                    {id: 166, name: "Ridgewood"},
+                    {id: 171, name: "Rosedale"},
+                    {id: 173, name: "Schuylerville"},
+                    {id: 181, name: "South Ozone Park"},
+                    {id: 183, name: "Springfield Gardens"},
+                    {id: 185, name: "St. Albans"},
+                    {id: 189, name: "Sunnyside"},
+                    {id: 203, name: "Van Nest"},
+                    {id: 212, name: "Whitestone"},
+                    {id: 217, name: "Woodhaven"},
+                    {id: 220, name: "Woodside"}
+                ]
+            },
+            4: { // Staten Island
+                name: "Staten Island",
+                neighbourhoods: [
+                    {id: 33, name: "Castleton Corners"},
+                    {id: 40, name: "Clifton"},
+                    {id: 46, name: "Concord"},
+                    {id: 55, name: "Dongan Hills"},
+                    {id: 69, name: "Eltingville"},
+                    {id: 70, name: "Emerson Hill"},
+                    {id: 82, name: "Fort Wadsworth"},
+                    {id: 88, name: "Grant City"},
+                    {id: 90, name: "Great Kills"},
+                    {id: 93, name: "Grymes Hill"},
+                    {id: 100, name: "Howland Hook"},
+                    {id: 101, name: "Huguenot"},
+                    {id: 114, name: "Lighthouse Hill"},
+                    {id: 126, name: "Midland Beach"},
+                    {id: 140, name: "New Brighton"},
+                    {id: 141, name: "New Dorp"},
+                    {id: 142, name: "New Dorp Beach"},
+                    {id: 143, name: "New Springville"},
+                    {id: 148, name: "Oakwood"},
+                    {id: 157, name: "Prince's Bay"},
+                    {id: 161, name: "Randall Manor"},
+                    {id: 165, name: "Richmondtown"},
+                    {id: 170, name: "Rosebank"},
+                    {id: 172, name: "Rossville"},
+                    {id: 180, name: "South Beach"},
+                    {id: 186, name: "St. George"},
+                    {id: 187, name: "Stapleton"},
+                    {id: 193, name: "Todt Hill"},
+                    {id: 194, name: "Tompkinsville"},
+                    {id: 195, name: "Tottenville"},
+                    {id: 207, name: "West Brighton"},
+                    {id: 211, name: "Westerleigh"},
+                    {id: 215, name: "Willowbrook"},
+                    {id: 219, name: "Woodrow"}
+                ]
+            }
+        };
+
+        // Mahalle seçimini güncelleme fonksiyonu
+        function updateNeighbourhoods() {
+            const groupSelect = document.getElementById("neighbourhood_group");
+            const neighbourhoodSelect = document.getElementById("neighbourhood");
+            const selectedGroup = groupSelect.value;
+
+            // Mahalle seçimini temizle
+            neighbourhoodSelect.innerHTML = '<option value="">Şehir Seçiniz</option>';
+
+            if (selectedGroup !== "") {
+                const group = neighbourhoodGroups[selectedGroup];
+                group.neighbourhoods.forEach(neighbourhood => {
+                    const option = document.createElement("option");
+                    option.value = neighbourhood.id;
+                    option.textContent = neighbourhood.name;
+                    neighbourhoodSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Mahalle grubu değiştiğinde mahalleleri güncelle
+        document.getElementById("neighbourhood_group").addEventListener("change", updateNeighbourhoods);
+
+        async function getExchangeRate() {
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                return data.rates.TRY;
+            } catch (error) {
+                console.error('Döviz kuru alınamadı:', error);
+                return 32; // Varsayılan kur (hata durumunda)
+            }
+        }
+
+        async function gonder() {
+            const sonucDiv = document.getElementById("sonuc");
+            sonucDiv.className = "price-loading";
+            sonucDiv.innerText = "Tahmin yapılıyor...";
+
+            const veri = {
+                neighbourhood_group: [parseInt(document.getElementById("neighbourhood_group").value)],
+                neighbourhood: [parseInt(document.getElementById("neighbourhood").value)],
+                latitude: [parseFloat(document.getElementById("latitude").value)],
+                longitude: [parseFloat(document.getElementById("longitude").value)],
+                room_type: [parseInt(document.getElementById("room_type").value)],
+                minimum_nights: [parseInt(document.getElementById("minimum_nights").value)]
+            };
+
+            try {
+                const [predictionResponse, exchangeRate] = await Promise.all([
+                    fetch("http://127.0.0.1:5000/predict", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(veri)
+                    }).then(response => response.json()),
+                    getExchangeRate()
+                ]);
+
+                const usdPrice = predictionResponse.prediction;
+                const tryPrice = usdPrice * exchangeRate;
+
+                sonucDiv.innerHTML = `
+                    <div class="price-value price-usd">${usdPrice.toFixed(2)} USD</div>
+                    <div class="price-value price-try">${tryPrice.toFixed(2)} TL</div>
+                    <div class="exchange-rate">
+                        1 USD = ${exchangeRate.toFixed(2)} TL
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Hata:", error);
+                sonucDiv.className = "price-error";
+                sonucDiv.innerText = "Bir hata oluştu. Lütfen tekrar deneyiniz.";
+            }
+        }
+    </script>
+</body>
+</html> 
